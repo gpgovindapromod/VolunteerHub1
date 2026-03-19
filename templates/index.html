@@ -1,0 +1,119 @@
+{% extends 'base.html' %}
+{% block title %}Welcome{% endblock %}
+{% block footer %}{% endblock %}
+
+{% block content %}
+<!-- HERO -->
+<section class="hero-section">
+  <div class="container">
+    <div class="hero-inner">
+      <div>
+        <div class="hero-badge"><i class="ri-flashlight-line"></i> Where Every Volunteer Counts</div>
+        <h1 class="hero-title">College Fest<br>Volunteer<br><span class="text-gradient">Management</span></h1>
+        <p class="hero-desc">A centralized, database-driven system built to eliminate the chaos of manual volunteer coordination — from team assignments to real-time attendance tracking.</p>
+        <div class="hero-cta">
+          <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg"><i class="ri-user-heart-line"></i> Get Started Free</a>
+          <a href="#problem" class="btn btn-outline btn-lg"><i class="ri-arrow-down-line"></i> Learn More</a>
+        </div>
+      </div>
+      <div class="login-panel">
+        <a href="{{ url_for('auth.login') }}?role=volunteer" class="login-card-link volunteer">
+          <div class="lc-icon"><i class="ri-user-star-line"></i></div>
+          <div class="lc-text"><h3>Volunteer Portal</h3><p>Register for events, update availability, and track your participation</p></div>
+          <i class="ri-arrow-right-line lc-arrow"></i>
+        </a>
+        <a href="{{ url_for('auth.login') }}?role=organization" class="login-card-link org">
+          <div class="lc-icon"><i class="ri-building-4-line"></i></div>
+          <div class="lc-text"><h3>Organizer Portal</h3><p>Create events, assign tasks, and manage all volunteer records</p></div>
+          <i class="ri-arrow-right-line lc-arrow"></i>
+        </a>
+        <div class="info-chip">
+          <i class="ri-shield-check-line"></i>
+          <p>Real-time database updates ensure accurate coordination and zero duplication across all teams.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stats-bar">
+  <div class="container">
+    <div class="stats-inner">
+      <div class="stat-item-land reveal"><div class="stat-num-land">500+</div><div class="stat-label-land">Volunteers Managed</div></div>
+      <div class="stat-divider-land"></div>
+      <div class="stat-item-land reveal"><div class="stat-num-land">30+</div><div class="stat-label-land">Events Covered</div></div>
+      <div class="stat-divider-land"></div>
+      <div class="stat-item-land reveal"><div class="stat-num-land">0</div><div class="stat-label-land">Duplicate Records</div></div>
+      <div class="stat-divider-land"></div>
+      <div class="stat-item-land reveal"><div class="stat-num-land">100%</div><div class="stat-label-land">Real-Time Sync</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- PROBLEMS -->
+<section class="section" id="problem">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-tag">The Problem</div>
+      <h2>Manual Coordination Breaks Down</h2>
+      <p>College fests are complex. Managing volunteers manually creates too many points of failure.</p>
+    </div>
+    <div class="cards-grid">
+      <div class="feat-card reveal"><div class="feat-icon"><i class="ri-file-list-line"></i></div><h4>Manual Record Keeping</h4><p>Volunteer data scattered across registers, spreadsheets, and chat groups leads to duplication and inconsistencies.</p></div>
+      <div class="feat-card reveal"><div class="feat-icon"><i class="ri-team-line"></i></div><h4>Unstructured Task Allocation</h4><p>Assigning volunteers to multiple teams manually becomes confusing and nearly impossible to track accurately.</p></div>
+      <div class="feat-card reveal"><div class="feat-icon"><i class="ri-time-line"></i></div><h4>Attendance Issues</h4><p>Manual attendance is inaccurate, inconsistent, and leaves no reliable performance record for evaluation.</p></div>
+      <div class="feat-card reveal"><div class="feat-icon"><i class="ri-shuffle-line"></i></div><h4>Many-to-Many Complexity</h4><p>One volunteer works in multiple events; each event needs multiple volunteers — a nightmare to manage by hand.</p></div>
+      <div class="feat-card reveal"><div class="feat-icon"><i class="ri-error-warning-line"></i></div><h4>Last-Minute Changes</h4><p>Sudden schedule or team changes create coordination failures without a centralized system to push updates.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="section" id="how">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-tag">How It Works</div>
+      <h2>Simple. Structured. Reliable.</h2>
+    </div>
+    <div class="steps">
+      <div class="step reveal"><div class="step-num">01</div><h4>Register &amp; Set Up</h4><p>Volunteers register through the portal with their details, skills, and availability for the fest.</p></div>
+      <div class="step reveal"><div class="step-num">02</div><h4>Assign &amp; Coordinate</h4><p>Organizers create events, assign volunteers to teams and tasks, and publish schedules instantly.</p></div>
+      <div class="step reveal"><div class="step-num">03</div><h4>Track &amp; Evaluate</h4><p>Attendance is recorded digitally. Organizers monitor performance and volunteers view their contributions.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- OBJECTIVES -->
+<section class="section" id="solution" style="padding-top:0;">
+  <div class="container">
+    <div class="section-header reveal">
+      <div class="section-tag">Project Objectives</div>
+      <h2>Built With Purpose</h2>
+      <p>Every feature of VolunteerHub maps directly to a core project objective.</p>
+    </div>
+    <div class="cards-grid">
+      <div class="feat-card reveal"><div class="feat-icon"><i class="ri-focus-3-line"></i></div><h4>Centralized Management</h4><p>Store and manage all volunteer and event data in one unified, accessible system.</p></div>
+      <div class="feat-card reveal"><div class="feat-icon"><i class="ri-bar-chart-box-line"></i></div><h4>Performance Monitoring</h4><p>Accurate records of attendance and contributions for fair evaluation.</p></div>
+      <div class="feat-card reveal"><div class="feat-icon"><i class="ri-check-double-line"></i></div><h4>Error Reduction</h4><p>Minimize duplication, data inconsistencies, and manual mistakes through normalization.</p></div>
+      <div class="feat-card reveal"><div class="feat-icon"><i class="ri-speed-line"></i></div><h4>Efficient Coordination</h4><p>Improve communication and streamline coordination across all teams during the fest.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-section">
+  <div class="container">
+    <div class="cta-inner reveal">
+      <h2>Ready to Volunteer?</h2>
+      <p>Join hundreds of students making College Fest an unforgettable experience.</p>
+      <div class="cta-btns">
+        <a href="{{ url_for('auth.register') }}" class="btn btn-primary btn-lg"><i class="ri-user-heart-line"></i> Join as Volunteer</a>
+        <a href="{{ url_for('auth.register') }}?role=organization" class="btn btn-outline btn-lg"><i class="ri-building-line"></i> Organizer Access</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+{% include 'partials/footer.html' %}
+{% endblock %}

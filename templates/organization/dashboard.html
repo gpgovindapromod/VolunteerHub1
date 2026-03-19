@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% block title %}Org Dashboard{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="app-layout">
+  {% include 'organization/sidebar.html' %}
+  <div class="main-content">
+
+    <div class="page-header flex-between flex-wrap gap-md">
+      <div>
+        <div class="page-title">Dashboard</div>
+        <div class="page-subtitle">{{ session.get('user_name','Organization') }} — Organizer Panel</div>
+      </div>
+      <a href="{{ url_for('organization.create_activity') }}" class="btn btn-primary"><i class="ri-add-circle-line"></i>
+        New Activity</a>
+    </div>
+
+    <div class="stats-grid">
+      <div class="stat-card reveal">
+        <div class="stat-icon si-purple"><i class="ri-calendar-line"></i></div>
+        <div>
+          <div class="stat-value">{{ stats.total_activities|default(0) }}</div>
+          <div class="stat-label">Activities</div>
+        </div>
+      </div>
+      <div class="stat-card reveal">
+        <div class="stat-icon si-yellow"><i class="ri-send-plane-line"></i></div>
+        <div>
+          <div class="stat-value">{{ stats.pending_applications|default(0) }}</div>
+          <div class="stat-label">Pending</div>
+        </div>
+      </div>
+      <div class="stat-card reveal">
+        <div class="stat-icon si-green"><i class="ri-group-line"></i></div>
+        <div>
+          <div class="stat-value">{{ stats.assigned_volunteers|default(0) }}</div>
+          <div class="stat-label">Assigned</div>
+        </div>
+      </div>
+      <div class="stat-card reveal">
+        <div class="stat-icon si-cyan"><i class="ri-checkbox-circle-line"></i></div>
+        <div>
+          <div class="stat-value">{{ stats.attendance_today|default(0) }}</div>
+          <div class="stat-label">Present Today</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="two-col" style="gap:20px;">
+      <div>
+        <div class="section-title"><i class="ri-calendar-line" style="color:var(--pink);"></i> My Activities</div>
+        {% if activities %}
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          {% for act in activities %}
+          <div class="card card-sm reveal">
+            <div class="flex-between mb-sm">
+              <div>
+                <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:0.95rem;">{{ act['title'] }}</div>
+                <div class="text-muted" style="font-size:12px;margin-top:2px;"><i class="ri-calendar-line"></i> {{
+                  act['date'] if act['date'] else 'TBD' }}</div>
+              </div>
+              <span class="badge {{ 'badge-green' if act['status']=='open' else 'badge-yellow' }}">{{
+                act['status']|capitalize }}</span>
+            </div>
+            <div class="progress">
+              <div class="progress-fill"
+                style="width:{{ [(((act['assigned_count']|default(0))/(act['total_slots']|default(1)))*100)|int, 100]|min }}%;">
+              </div>
+            </div>
+            <div class="text-muted mt-sm" style="font-size:12px;">{{ act['assigned_count']|default(0) }}/{{
+              act['total_slots']|default('?') }} slots filled</div>
+            <div style="display:flex;gap:8px;margin-top:10px;">
+              <a href="{{ url_for('organization.activity_detail', activity_id=act['id']) }}"
+                class="btn btn-primary btn-sm"><i class="ri-settings-line"></i> Manage</a>
+              <a href="{{ url_for('organization.attendance') }}?activity={{ act['id'] }}"
+                class="btn btn-success btn-sm"><i class="ri-checkbox-multiple-line"></i> Attendance</a>
+              <a href="{{ url_for('organization.volunteers') }}" class="btn btn-ghost btn-sm"><i
+                  class="ri-group-line"></i> Applicants</a>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="card">
+          <div class="empty-state">
+            <div class="empty-icon"><i class="ri-calendar-line"></i></div>
+            <div class="empty-text">No activities yet</div><a href="{{ url_for('organization.create_activity') }}"
+              class="btn btn-primary mt-md"><i class="ri-add-circle-line"></i> Create Activity</a>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+
+      <div>
+        <div class="section-title"><i class="ri-time-line" style="color:var(--cyan);"></i> Pending Applications</div>
+        {% if pending_applications %}
+        <div style="display:flex; flex-direction:column; gap:10px;">
+          {% for app in pending_applications %}
+          <div class="card card-sm reveal">
+            <div class="flex-between mb-sm">
+              <div>
+                <div style="font-weight:600;font-size:0.9rem;">{{ app['vol_name'] }}</div>
+                <div class="text-muted" style="font-size:12px;">{{ app['act_title'] }} — <span
+                    class="badge badge-purple">{{ app['role_applied'] }}</span></div>
+              </div>
+              <span class="badge badge-yellow">Pending</span>
+            </div>
+            <div style="display:flex;gap:8px;">
+              <form action="{{ url_for('organization.review_application', app_id=app['id']) }}" method="POST"
+                style="display:contents;">
+                <input type="hidden" name="action" value="approve">
+                <button type="submit" class="btn btn-success btn-sm"><i class="ri-checkbox-circle-line"></i>
+                  Approve</button>
+              </form>
+              <form action="{{ url_for('organization.review_application', app_id=app['id']) }}" method="POST"
+                style="display:contents;">
+                <input type="hidden" name="action" value="reject">
+                <button type="submit" class="btn btn-danger btn-sm"><i class="ri-close-circle-line"></i> Reject</button>
+              </form>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="card">
+          <div class="empty-state">
+            <div class="empty-icon"><i class="ri-inbox-line"></i></div>
+            <div class="empty-text">No pending applications</div>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

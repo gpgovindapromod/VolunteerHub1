@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+{% block title %}Volunteers{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="app-layout">
+  {% include 'organization/sidebar.html' %}
+  <div class="main-content">
+    <div class="page-header flex-between flex-wrap gap-md">
+      <div><div class="page-title">Volunteer Management</div><div class="page-subtitle">Review and manage all applicants</div></div>
+      <div class="search-wrap"><i class="ri-search-line search-ico"></i><input type="text" class="form-control" id="tableSearch" placeholder="Search..." style="padding-left:38px;min-width:220px;"></div>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;">
+      <button class="btn btn-primary btn-sm filter-tab" data-filter="all">All</button>
+      <button class="btn btn-ghost btn-sm filter-tab" data-filter="pending">Pending</button>
+      <button class="btn btn-ghost btn-sm filter-tab" data-filter="approved">Approved</button>
+      <button class="btn btn-ghost btn-sm filter-tab" data-filter="rejected">Rejected</button>
+    </div>
+    <div class="table-wrapper">
+      <table data-searchable>
+        <thead><tr><th>Volunteer</th><th>Activity</th><th>Role</th><th>Applied</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for app in applications %}
+          <tr data-status="{{ app['status'] }}">
+            <td>
+              <div style="display:flex;align-items:center;gap:10px;">
+                <div style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;color:#fff;flex-shrink:0;">{{ app['vol_name'][0]|upper }}</div>
+                <div><div style="font-weight:600;">{{ app['vol_name'] }}</div><div class="text-muted" style="font-size:12px;">{{ app['vol_email'] }}</div></div>
+              </div>
+            </td>
+            <td class="text-muted">{{ app['act_title'][:28] }}{% if app['act_title']|length>28 %}…{% endif %}</td>
+            <td><span class="badge badge-purple">{{ app['role_applied'] }}</span></td>
+            <td class="text-muted" style="font-size:12px;">{{ app['created_at'] if app['created_at'] else '—' }}</td>
+            <td><span class="badge {% if app['status']=='approved' %}badge-green{% elif app['status']=='rejected' %}badge-pink{% else %}badge-yellow{% endif %}">{{ app['status']|capitalize }}</span></td>
+            <td>
+              {% if app['status']=='pending' %}
+              <div style="display:flex;gap:6px;">
+                <form action="{{ url_for('organization.review_application',app_id=app['id']) }}" method="POST" style="display:contents;"><input type="hidden" name="action" value="approve"><button type="submit" class="btn btn-success btn-sm"><i class="ri-check-line"></i></button></form>
+                <form action="{{ url_for('organization.review_application',app_id=app['id']) }}" method="POST" style="display:contents;"><input type="hidden" name="action" value="reject"><button type="submit" class="btn btn-danger btn-sm"><i class="ri-close-line"></i></button></form>
+              </div>
+              {% else %}<span class="text-muted" style="font-size:12px;">Reviewed</span>{% endif %}
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="6" style="padding:48px;"><div class="empty-state"><div class="empty-icon"><i class="ri-inbox-line"></i></div><div class="empty-text">No applications yet</div></div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% block extra_js %}
+<script>
+document.querySelectorAll('.filter-tab').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.filter-tab').forEach(b=>{b.classList.remove('btn-primary');b.classList.add('btn-ghost');});btn.classList.add('btn-primary');btn.classList.remove('btn-ghost');const f=btn.dataset.filter;document.querySelectorAll('tbody tr[data-status]').forEach(r=>{r.style.display=(f==='all'||r.dataset.status===f)?'':'none';});});});
+</script>
+{% endblock %}
+{% endblock %}

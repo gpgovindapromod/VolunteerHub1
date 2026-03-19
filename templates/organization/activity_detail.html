@@ -1,0 +1,179 @@
+{% extends 'base.html' %}
+{% block title %}{{ activity['title'] }}{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="app-layout">
+  {% include 'organization/sidebar.html' %}
+  <div class="main-content">
+
+    <!-- Header -->
+    <div class="flex-between flex-wrap gap-md mb-lg">
+      <div>
+        <a href="{{ url_for('organization.dashboard') }}" style="color:var(--muted);font-size:13px;"><i class="ri-arrow-left-line"></i> Dashboard</a>
+        <div class="page-title mt-sm">{{ activity['title'] }}</div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:6px;">
+          <span class="badge {{ 'badge-green' if activity['status']=='open' else 'badge-pink' if activity['status']=='closed' else 'badge-yellow' }}">
+            <i class="ri-circle-fill" style="font-size:8px;"></i> {{ activity['status']|capitalize }}
+          </span>
+          {% if activity['day_count'] > 1 %}
+            <span class="badge badge-cyan"><i class="ri-calendar-line"></i> {{ activity['day_count'] }} Days</span>
+          {% endif %}
+          <span class="badge badge-purple"><i class="ri-group-line"></i> {{ activity['assigned_count'] }}/{{ activity['total_slots'] }} Assigned</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;">
+        <!-- Reopen / Close -->
+        <form action="{{ url_for('organization.toggle_status', activity_id=activity['id']) }}" method="POST">
+          <button type="submit" class="btn {{ 'btn-danger' if activity['status']=='open' else 'btn-success' }} btn-sm">
+            <i class="ri-{{ 'lock-line' if activity['status']=='open' else 'lock-unlock-line' }}"></i>
+            {{ 'Close Registration' if activity['status']=='open' else 'Reopen Registration' }}
+          </button>
+        </form>
+        <a href="{{ url_for('organization.edit_activity', activity_id=activity['id']) }}" class="btn btn-ghost btn-sm">
+          <i class="ri-edit-line"></i> Edit Activity
+        </a>
+        <!-- Smart Assign -->
+        <form action="{{ url_for('organization.auto_assign', activity_id=activity['id']) }}" method="POST">
+          <button type="submit" class="btn btn-primary btn-sm">
+            <i class="ri-magic-line"></i> Smart Auto-Assign
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:2fr 1fr;gap:20px;flex-wrap:wrap;">
+
+      <!-- Left column -->
+      <div>
+        <!-- Activity Info -->
+        <div class="card mb-md reveal">
+          <div class="section-title"><i class="ri-information-line" style="color:var(--pink);"></i> Activity Info</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-bottom:16px;">
+            <div><div class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Start Date</div><div style="font-weight:600;">{{ activity['start_date'] or '—' }}</div></div>
+            <div><div class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">End Date</div><div style="font-weight:600;">{{ activity['end_date'] or activity['start_date'] or '—' }}</div></div>
+            <div><div class="text-muted" style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;">Location</div><div style="font-weight:600;">{{ activity['location'] or '—' }}</div></div>
+          </div>
+          {% if activity['description'] %}<p style="font-size:14px;color:var(--muted);line-height:1.7;">{{ activity['description'] }}</p>{% endif %}
+          {% if activity['requirements'] %}<div class="alert alert-info mt-md" style="font-size:13px;"><i class="ri-information-line"></i> {{ activity['requirements'] }}</div>{% endif %}
+        </div>
+
+        <!-- Roles -->
+        <div class="card mb-md reveal">
+          <div class="section-title"><i class="ri-user-settings-line" style="color:var(--cyan);"></i> Roles</div>
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Role</th><th>Required Skills</th><th>Filled</th><th>Remaining</th></tr></thead>
+              <tbody>
+                {% for role in roles %}
+                <tr>
+                  <td style="font-weight:600;">{{ role['name'] }}</td>
+                  <td>{% if role['skill_tags'] %}{% for sk in role['skill_tags'].split(',') %}<span class="skill-tag" style="font-size:11px;">{{ sk.strip() }}</span>{% endfor %}{% else %}<span class="text-muted">General</span>{% endif %}</td>
+                  <td><span class="text-green bold">{{ role['filled'] }}</span></td>
+                  <td>
+                    {% set rem = role['total'] - role['filled'] %}
+                    <span class="{{ 'text-green' if rem > 0 else 'text-muted' }}">{{ rem }}</span>/{{ role['total'] }}
+                    <div class="progress mt-sm" style="width:80px;display:inline-block;vertical-align:middle;margin-left:8px;">
+                      <div class="progress-fill" style="width:{{ [(role['filled']/role['total']*100)|int,100]|min }}%;"></div>
+                    </div>
+                  </td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Assigned Volunteers -->
+        <div class="card reveal">
+          <div class="flex-between mb-md">
+            <div class="section-title" style="margin-bottom:0;"><i class="ri-group-line" style="color:var(--pink);"></i> Assigned Volunteers</div>
+            {% if assignments %}
+            <a href="{{ url_for('organization.attendance') }}?activity={{ activity['id'] }}" class="btn btn-success btn-sm"><i class="ri-checkbox-multiple-line"></i> Go to Attendance</a>
+            {% endif %}
+          </div>
+          {% if assignments %}
+          <div class="table-wrapper">
+            <table>
+              <thead><tr><th>Volunteer</th><th>Role</th><th>Skills</th><th>Contact</th></tr></thead>
+              <tbody>
+                {% for a in assignments %}
+                <tr>
+                  <td><div style="display:flex;align-items:center;gap:10px;"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;flex-shrink:0;">{{ a['vol_name'][0]|upper }}</div><span style="font-weight:600;">{{ a['vol_name'] }}</span></div></td>
+                  <td><span class="badge badge-purple">{{ a['role'] }}</span></td>
+                  <td>{% if a['vol_skills'] %}{% for s in a['vol_skills'].split(',')[:3] %}<span class="skill-tag" style="font-size:11px;">{{ s.strip() }}</span>{% endfor %}{% else %}<span class="text-muted">—</span>{% endif %}</td>
+                  <td class="text-muted" style="font-size:12px;">{{ a['vol_email'] }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="empty-state"><div class="empty-icon"><i class="ri-group-line"></i></div><div class="empty-text">No volunteers assigned yet</div><div class="empty-sub">Approve applications or use Smart Auto-Assign</div></div>
+          {% endif %}
+        </div>
+      </div>
+
+      <!-- Right column -->
+      <div>
+        <!-- Activity days -->
+        <div class="card mb-md reveal">
+          <div class="section-title"><i class="ri-calendar-line" style="color:var(--cyan);"></i> Activity Days</div>
+          {% if days %}
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            {% for day in days %}
+            <a href="{{ url_for('organization.attendance') }}?activity={{ activity['id'] }}&day={{ day['day_date'] }}" style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(255,65,108,0.06);border:1px solid rgba(255,65,108,0.15);border-radius:12px;color:var(--text);transition:all 0.25s;" onmouseover="this.style.borderColor='rgba(255,65,108,0.4)'" onmouseout="this.style.borderColor='rgba(255,65,108,0.15)'">
+              <div><div style="font-weight:600;font-size:13px;">{{ day['label'] }}</div><div class="text-muted" style="font-size:12px;">{{ day['day_date'] }}</div></div>
+              <i class="ri-arrow-right-line" style="color:var(--muted);"></i>
+            </a>
+            {% endfor %}
+          </div>
+          {% else %}
+          <div class="text-muted" style="font-size:13px;">No days configured. Edit activity to set dates.</div>
+          {% endif %}
+        </div>
+
+        <!-- Applications summary -->
+        <div class="card mb-md reveal">
+          <div class="section-title"><i class="ri-send-plane-line" style="color:var(--yellow);"></i> Applications</div>
+          <div style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;">
+            {% set pending_count  = applications|selectattr('status','eq','pending') |list|length %}
+            {% set approved_count = applications|selectattr('status','eq','approved')|list|length %}
+            {% set rejected_count = applications|selectattr('status','eq','rejected')|list|length %}
+            <div class="card card-sm" style="flex:1;text-align:center;min-width:60px;padding:10px;border-color:rgba(255,200,50,0.2);"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:#ffc832;">{{ pending_count }}</div><div class="text-muted" style="font-size:11px;">Pending</div></div>
+            <div class="card card-sm" style="flex:1;text-align:center;min-width:60px;padding:10px;border-color:rgba(80,255,150,0.2);"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:#50ff96;">{{ approved_count }}</div><div class="text-muted" style="font-size:11px;">Approved</div></div>
+            <div class="card card-sm" style="flex:1;text-align:center;min-width:60px;padding:10px;border-color:rgba(255,65,108,0.2);"><div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.3rem;color:var(--pink);">{{ rejected_count }}</div><div class="text-muted" style="font-size:11px;">Rejected</div></div>
+          </div>
+          {% if pending_count > 0 %}
+          <a href="{{ url_for('organization.volunteers') }}" class="btn btn-primary btn-sm w-full"><i class="ri-user-follow-line"></i> Review Applications</a>
+          {% endif %}
+        </div>
+
+        <!-- Certificate block -->
+        <div class="card reveal" style="border-color:{{ 'rgba(80,255,150,0.3)' if all_complete else 'var(--border)' }};">
+          <div class="section-title"><i class="ri-medal-line" style="color:{{ '#50ff96' if all_complete else 'var(--muted)' }};"></i> Certificates</div>
+          {% if all_complete or cert_count > 0 %}
+            {% if cert_count > 0 %}
+              <div class="alert alert-success mb-md"><i class="ri-checkbox-circle-line"></i> {{ cert_count }} certificate(s) already issued</div>
+            {% endif %}
+            {% if assignments and (cert_count < assignments|length) %}
+            <form action="{{ url_for('organization.issue_certificates', activity_id=activity['id']) }}" method="POST">
+              <button type="submit" class="btn btn-success w-full">
+                <i class="ri-award-line"></i> Issue Certificates to All Volunteers
+              </button>
+            </form>
+            {% else %}
+              <div class="text-muted" style="font-size:13px;text-align:center;padding:10px;"><i class="ri-checkbox-circle-line" style="color:#50ff96;"></i> All certificates issued!</div>
+            {% endif %}
+          {% else %}
+            <div class="empty-state" style="padding:24px 10px;">
+              <div class="empty-icon" style="font-size:2rem;"><i class="ri-lock-line"></i></div>
+              <div class="empty-text" style="font-size:13px;">Mark all attendance first</div>
+              <div class="empty-sub" style="font-size:12px;">Certificates unlock when attendance is complete for all days</div>
+            </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

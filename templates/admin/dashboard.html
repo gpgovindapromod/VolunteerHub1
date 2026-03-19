@@ -1,0 +1,101 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="app-layout">
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-toggle-btn"><button id="sidebarToggle"><span>‹</span></button></div>
+    <div class="sidebar-user">
+      <div class="sidebar-avatar" style="background:linear-gradient(135deg,#ff416c,#cc0033);">A</div>
+      <div class="nav-label"><div class="sidebar-user-name">Administrator</div><span class="role-badge" style="background:rgba(255,65,108,0.12);color:var(--pink);border-color:rgba(255,65,108,0.25);font-size:10px;">🛡️ System</span></div>
+    </div>
+    <div class="sidebar-section-label">Administration</div>
+    <a href="{{ url_for('admin.dashboard') }}" class="sidebar-item active"><span class="sidebar-icon"><i class="ri-dashboard-line"></i></span><span class="nav-label">Dashboard</span></a>
+    <a href="#users-section"      class="sidebar-item"><span class="sidebar-icon"><i class="ri-group-line"></i></span><span class="nav-label">Users</span></a>
+    <a href="#activities-section" class="sidebar-item"><span class="sidebar-icon"><i class="ri-calendar-line"></i></span><span class="nav-label">Activities</span></a>
+    <div class="sidebar-section-label">System</div>
+    <a href="{{ url_for('admin.logout') }}" class="sidebar-item" style="color:var(--pink);"><span class="sidebar-icon"><i class="ri-logout-box-line"></i></span><span class="nav-label">Logout</span></a>
+  </aside>
+  <div class="main-content">
+    <div class="page-header"><div class="page-title">Admin Dashboard 🛡️</div><div class="page-subtitle">System-wide overview and controls</div></div>
+    <div class="stats-grid">
+      <div class="stat-card reveal"><div class="stat-icon si-purple"><i class="ri-user-line"></i></div><div><div class="stat-value">{{ stats.total_volunteers|default(0) }}</div><div class="stat-label">Volunteers</div></div></div>
+      <div class="stat-card reveal"><div class="stat-icon si-cyan"><i class="ri-building-line"></i></div><div><div class="stat-value">{{ stats.total_organizations|default(0) }}</div><div class="stat-label">Organizations</div></div></div>
+      <div class="stat-card reveal"><div class="stat-icon si-green"><i class="ri-calendar-line"></i></div><div><div class="stat-value">{{ stats.total_activities|default(0) }}</div><div class="stat-label">Activities</div></div></div>
+      <div class="stat-card reveal"><div class="stat-icon si-yellow"><i class="ri-send-plane-line"></i></div><div><div class="stat-value">{{ stats.total_applications|default(0) }}</div><div class="stat-label">Applications</div></div></div>
+    </div>
+
+    <div id="users-section">
+      <div class="flex-between flex-wrap mb-md gap-md">
+        <div class="section-title" style="flex:1;margin-bottom:0;"><i class="ri-group-line" style="color:var(--pink);"></i> All Users</div>
+        <div class="search-wrap"><i class="ri-search-line search-ico"></i><input type="text" class="form-control" id="tableSearch" placeholder="Search users..." style="padding-left:38px;min-width:200px;"></div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-primary btn-sm filter-role" data-role="all">All</button>
+          <button class="btn btn-ghost btn-sm filter-role" data-role="volunteer">Volunteers</button>
+          <button class="btn btn-ghost btn-sm filter-role" data-role="organization">Orgs</button>
+        </div>
+      </div>
+      <div class="table-wrapper mb-lg">
+        <table data-searchable><thead><tr><th>Name</th><th>Email</th><th>Role</th><th>Joined</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for user in users %}
+          <tr data-role="{{ user['role'] }}">
+            <td><div style="display:flex;align-items:center;gap:10px;"><div style="width:30px;height:30px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;">{{ user['name'][0]|upper }}</div><span style="font-weight:600;">{{ user['name'] }}</span></div></td>
+            <td class="text-muted">{{ user['email'] }}</td>
+            <td><span class="badge {{ 'badge-purple' if user['role']=='volunteer' else 'badge-cyan' }}">{{ user['role']|capitalize }}</span></td>
+            <td class="text-muted" style="font-size:12px;">{{ user['created_at'] if user['created_at'] else '—' }}</td>
+            <td><span class="badge {{ 'badge-green' if user['is_active'] else 'badge-pink' }}">{{ 'Active' if user['is_active'] else 'Suspended' }}</span></td>
+            <td><div style="display:flex;gap:6px;">
+              <a href="{{ url_for('admin.toggle_user',user_id=user['id']) }}" class="btn btn-ghost btn-sm">{{ '🔒' if user['is_active'] else '🔓' }}</a>
+              <button class="btn btn-danger btn-sm" data-modal-open="delUser{{ user['id'] }}"><i class="ri-delete-bin-line"></i></button>
+            </div></td>
+          </tr>
+          <div class="modal-overlay" id="delUser{{ user['id'] }}">
+            <div class="modal"><button class="modal-close" data-modal-close><i class="ri-close-line"></i></button>
+              <div class="modal-title"><i class="ri-alert-line" style="color:var(--pink);"></i> Delete {{ user['name'] }}?</div>
+              <div class="modal-body">This permanently deletes the user and all their data. This cannot be undone.</div>
+              <div class="modal-actions"><button class="btn btn-ghost" data-modal-close>Cancel</button><a href="{{ url_for('admin.delete_user',user_id=user['id']) }}" class="btn btn-danger"><i class="ri-delete-bin-line"></i> Delete</a></div>
+            </div>
+          </div>
+          {% else %}
+          <tr><td colspan="6" style="padding:48px;"><div class="empty-state"><div class="empty-icon"><i class="ri-group-line"></i></div><div class="empty-text">No users yet</div></div></td></tr>
+          {% endfor %}
+        </tbody></table>
+      </div>
+    </div>
+
+    <div id="activities-section">
+      <div class="section-title mb-md"><i class="ri-calendar-line" style="color:var(--cyan);"></i> All Activities</div>
+      <div class="table-wrapper">
+        <table><thead><tr><th>Title</th><th>Organization</th><th>Date</th><th>Slots</th><th>Status</th><th>Actions</th></tr></thead>
+        <tbody>
+          {% for act in activities %}
+          <tr>
+            <td style="font-weight:600;">{{ act['title'][:35] }}{% if act['title']|length>35 %}…{% endif %}</td>
+            <td class="text-muted">{{ act['org_name'] }}</td>
+            <td class="text-muted" style="font-size:12px;">{{ act['date'] if act['date'] else '—' }}</td>
+            <td><span class="text-green bold">{{ act['assigned_count']|default(0) }}</span><span class="text-muted">/{{ act['total_slots']|default('?') }}</span></td>
+            <td><span class="badge {{ 'badge-green' if act['status']=='open' else 'badge-yellow' if act['status']=='draft' else 'badge-pink' }}">{{ act['status']|capitalize }}</span></td>
+            <td><button class="btn btn-danger btn-sm" data-modal-open="delAct{{ act['id'] }}"><i class="ri-delete-bin-line"></i> Delete</button></td>
+          </tr>
+          <div class="modal-overlay" id="delAct{{ act['id'] }}">
+            <div class="modal"><button class="modal-close" data-modal-close><i class="ri-close-line"></i></button>
+              <div class="modal-title"><i class="ri-alert-line" style="color:var(--pink);"></i> Delete Activity?</div>
+              <div class="modal-body">Delete <strong>{{ act['title'] }}</strong>? All applications will also be removed.</div>
+              <div class="modal-actions"><button class="btn btn-ghost" data-modal-close>Cancel</button><a href="{{ url_for('admin.delete_activity',activity_id=act['id']) }}" class="btn btn-danger"><i class="ri-delete-bin-line"></i> Delete</a></div>
+            </div>
+          </div>
+          {% else %}
+          <tr><td colspan="6" style="padding:48px;"><div class="empty-state"><div class="empty-icon"><i class="ri-calendar-line"></i></div><div class="empty-text">No activities yet</div></div></td></tr>
+          {% endfor %}
+        </tbody></table>
+      </div>
+    </div>
+  </div>
+</div>
+{% block extra_js %}
+<script>
+document.querySelectorAll('.filter-role').forEach(btn=>{btn.addEventListener('click',()=>{document.querySelectorAll('.filter-role').forEach(b=>{b.classList.remove('btn-primary');b.classList.add('btn-ghost');});btn.classList.add('btn-primary');btn.classList.remove('btn-ghost');const r=btn.dataset.role;document.querySelectorAll('tbody tr[data-role]').forEach(row=>{row.style.display=(r==='all'||row.dataset.role===r)?'':'none';});});});
+</script>
+{% endblock %}
+{% endblock %}

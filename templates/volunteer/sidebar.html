@@ -1,0 +1,21 @@
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-toggle-btn">
+    <button id="sidebarToggle" title="Collapse"><span>‹</span></button>
+  </div>
+  <div class="sidebar-user">
+    <div class="sidebar-avatar">{{ (session.get('user_name','?') or '?')[0]|upper }}</div>
+    <div class="nav-label">
+      <div class="sidebar-user-name">{{ session.get('user_name','Volunteer') }}</div>
+      <span class="role-badge" style="font-size:10px;">🙋 Volunteer</span>
+    </div>
+  </div>
+  <div class="sidebar-section-label">Navigation</div>
+  <a href="{{ url_for('volunteer.dashboard') }}"  class="sidebar-item {% if request.endpoint=='volunteer.dashboard'  %}active{% endif %}"><span class="sidebar-icon"><i class="ri-home-5-line"></i></span><span class="nav-label">Dashboard</span></a>
+  <a href="{{ url_for('volunteer.activities') }}" class="sidebar-item {% if request.endpoint=='volunteer.activities' %}active{% endif %}"><span class="sidebar-icon"><i class="ri-calendar-event-line"></i></span><span class="nav-label">Browse Activities</span></a>
+  <a href="{{ url_for('volunteer.profile') }}"   class="sidebar-item {% if request.endpoint=='volunteer.profile'    %}active{% endif %}"><span class="sidebar-icon"><i class="ri-user-settings-line"></i></span><span class="nav-label">My Profile</span></a>
+  <div class="sidebar-section-label">Applications</div>
+  <a href="{{ url_for('volunteer.dashboard') }}#applied"  class="sidebar-item"><span class="sidebar-icon"><i class="ri-send-plane-line"></i></span><span class="nav-label">Applied</span></a>
+  <a href="{{ url_for('volunteer.dashboard') }}#approved" class="sidebar-item"><span class="sidebar-icon"><i class="ri-checkbox-circle-line"></i></span><span class="nav-label">Approved</span></a>
+  <div class="sidebar-section-label">Account</div>
+  <a href="{{ url_for('auth.logout') }}" class="sidebar-item" style="color:var(--pink);"><span class="sidebar-icon"><i class="ri-logout-box-line"></i></span><span class="nav-label">Logout</span></a>
+</aside>

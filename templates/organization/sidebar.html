@@ -1,0 +1,19 @@
+<aside class="sidebar" id="sidebar">
+  <div class="sidebar-toggle-btn">
+    <button id="sidebarToggle" title="Collapse"><span>‹</span></button>
+  </div>
+  <div class="sidebar-user">
+    <div class="sidebar-avatar" style="background:linear-gradient(135deg,#6a11cb,#00c6ff);">{{ (session.get('user_name','?') or '?')[0]|upper }}</div>
+    <div class="nav-label">
+      <div class="sidebar-user-name">{{ session.get('user_name','Organization') }}</div>
+      <span class="role-badge" style="font-size:10px; background:rgba(106,17,203,0.12); color:#a76ff0; border-color:rgba(106,17,203,0.25);">🏢 Org</span>
+    </div>
+  </div>
+  <div class="sidebar-section-label">Management</div>
+  <a href="{{ url_for('organization.dashboard') }}"       class="sidebar-item {% if request.endpoint=='organization.dashboard'       %}active{% endif %}"><span class="sidebar-icon"><i class="ri-dashboard-line"></i></span><span class="nav-label">Dashboard</span></a>
+  <a href="{{ url_for('organization.create_activity') }}" class="sidebar-item {% if request.endpoint=='organization.create_activity' %}active{% endif %}"><span class="sidebar-icon"><i class="ri-add-circle-line"></i></span><span class="nav-label">Create Activity</span></a>
+  <a href="{{ url_for('organization.volunteers') }}"      class="sidebar-item {% if request.endpoint=='organization.volunteers'      %}active{% endif %}"><span class="sidebar-icon"><i class="ri-group-line"></i></span><span class="nav-label">Volunteers</span></a>
+  <a href="{{ url_for('organization.attendance') }}"      class="sidebar-item {% if request.endpoint=='organization.attendance'      %}active{% endif %}"><span class="sidebar-icon"><i class="ri-checkbox-multiple-line"></i></span><span class="nav-label">Attendance</span></a>
+  <div class="sidebar-section-label">Account</div>
+  <a href="{{ url_for('auth.logout') }}" class="sidebar-item" style="color:var(--pink);"><span class="sidebar-icon"><i class="ri-logout-box-line"></i></span><span class="nav-label">Logout</span></a>
+</aside>

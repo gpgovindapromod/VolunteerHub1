@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="app-layout">
+  {% include 'volunteer/sidebar.html' %}
+  <div class="main-content">
+
+    <div class="page-header flex-between flex-wrap gap-md">
+      <div>
+        <div class="page-title">Welcome back, {{ (session.get('user_name','Volunteer') or 'Volunteer').split()[0] }} 👋
+        </div>
+        <div class="page-subtitle">Your volunteering overview</div>
+      </div>
+      <a href="{{ url_for('volunteer.activities') }}" class="btn btn-primary">
+        <i class="ri-search-line"></i> Browse Activities
+      </a>
+    </div>
+
+    <!-- PROFILE PHOTO BANNER -->
+    <div class="photo-upload-banner">
+      <div class="photo-avatar-wrap">
+        <div class="photo-avatar" id="avatarEl">
+          {% if volunteer and volunteer['photo'] %}
+          <img src="{{ url_for('volunteer.profile_photo') }}" alt="Profile photo" id="avatarImg">
+          {% else %}
+          <span id="avatarInitial">{{ (session.get('user_name','V') or 'V')[0].upper() }}</span>
+          {% endif %}
+        </div>
+        <label class="photo-edit-badge" for="photoInput" title="Change photo">
+          <i class="ri-pencil-line"></i>
+        </label>
+      </div>
+      <div class="photo-info">
+        <h4>{{ session.get('user_name', 'Volunteer') }}</h4>
+        <p>
+          {% if volunteer and volunteer['photo'] %}
+          Looking great! You can update your photo anytime.
+          {% else %}
+          Add a profile photo so organizers can recognise you.
+          {% endif %}
+        </p>
+        <form action="{{ url_for('volunteer.upload_photo') }}" method="POST" enctype="multipart/form-data"
+          id="photoForm">
+          <div class="photo-actions">
+            <label class="btn btn-outline btn-sm" for="photoInput" style="cursor:pointer">
+              <i class="ri-image-add-line"></i> Upload Photo
+            </label>
+            <input type="file" id="photoInput" name="photo" accept="image/*" style="display:none"
+              onchange="previewAndSubmit(this)">
+            {% if volunteer and volunteer['photo'] %}
+            <button type="button" class="btn-ghost-danger"
+              onclick="if(confirm('Remove your profile photo?')) document.getElementById('removePhotoForm').submit()">
+              <i class="ri-close-line"></i> Remove
+            </button>
+            {% endif %}
+          </div>
+          <div class="upload-drop" id="dropZone">
+            <i class="ri-upload-cloud-2-line drop-icon"></i>
+            <p>Drop an image here or click Upload above</p>
+            <p class="text-muted" style="font-size:11px;margin-top:3px">JPG, PNG, WEBP · max 2 MB</p>
+          </div>
+        </form>
+        {% if volunteer and volunteer['photo'] %}
+        <form id="removePhotoForm" action="{{ url_for('volunteer.remove_photo') }}" method="POST" style="display:none">
+        </form>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="stats-grid">
+      <div class="stat-card reveal">
+        <div class="stat-icon si-yellow"><i class="ri-send-plane-fill"></i></div>
+        <div>
+          <div class="stat-value">{{ stats.applied|default(0) }}</div>
+          <div class="stat-label">Applications</div>
+        </div>
+      </div>
+      <div class="stat-card reveal">
+        <div class="stat-icon si-green"><i class="ri-checkbox-circle-fill"></i></div>
+        <div>
+          <div class="stat-value">{{ stats.approved|default(0) }}</div>
+          <div class="stat-label">Approved</div>
+        </div>
+      </div>
+      <div class="stat-card reveal">
+        <div class="stat-icon si-purple"><i class="ri-task-line"></i></div>
+        <div>
+          <div class="stat-value">{{ stats.tasks|default(0) }}</div>
+          <div class="stat-label">Active Tasks</div>
+        </div>
+      </div>
+      <div class="stat-card reveal">
+        <div class="stat-icon si-cyan"><i class="ri-medal-fill"></i></div>
+        <div>
+          <div class="stat-value">{{ stats.certificates|default(0) }}</div>
+          <div class="stat-label">Certificates</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MY APPLICATIONS -->
+    <div id="applied">
+      <div class="section-title">
+        <i class="ri-file-list-line" style="color:var(--pink);font-size:16px"></i> My Applications
+      </div>
+      {% if applications %}
+      <div class="activity-grid">
+        {% for app in applications %}
+        <div class="activity-card reveal">
+          <div class="activity-card-header">
+            <span class="badge {% if app['status']=='approved' %}badge-green
+                               {% elif app['status']=='rejected' %}badge-pink
+                               {% else %}badge-yellow{% endif %}" style="position:absolute;top:14px;right:14px">
+              {{ app['status']|capitalize }}
+            </span>
+            <div class="activity-title">{{ app['act_title'] }}</div>
+            <div class="activity-org"><i class="ri-building-line"></i> {{ app['org_name'] }}</div>
+          </div>
+          <div class="activity-card-body">
+            <div class="activity-meta">
+              <span><i class="ri-calendar-line"></i> {{ app['act_date'] or 'TBD' }}</span>
+              <span><i class="ri-map-pin-line"></i> {{ app['act_location'] or 'Online' }}</span>
+              <span><i class="ri-user-line"></i> {{ app['role_applied'] }}</span>
+            </div>
+            <div class="text-muted" style="font-size:12px">
+              Applied {{ app['created_at'].strftime('%d %b %Y') if app['created_at'] else '' }}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card">
+        <div class="empty-state">
+          <div class="empty-icon"><i class="ri-inbox-line"></i></div>
+          <div class="empty-text">No applications yet</div>
+          <a href="{{ url_for('volunteer.activities') }}" class="btn btn-primary mt-md">
+            <i class="ri-search-line"></i> Browse Activities
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- UPCOMING TASKS -->
+    <div id="approved" class="mt-lg">
+      <div class="section-title">
+        <i class="ri-checkbox-circle-line" style="color:var(--cyan);font-size:16px"></i> Upcoming Tasks
+      </div>
+      {% if upcoming %}
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Activity</th>
+              <th>Role</th>
+              <th>Date</th>
+              <th>Location</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for t in upcoming %}
+            <tr>
+              <td class="bold">{{ t['act_title'] }}</td>
+              <td><span class="badge badge-purple">{{ t['role'] }}</span></td>
+              <td class="text-muted">{{ t['act_date'] or '—' }}</td>
+              <td class="text-muted">{{ t['act_location'] or '—' }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% else %}
+      <div class="card">
+        <div class="empty-state">
+          <div class="empty-icon"><i class="ri-calendar-line"></i></div>
+          <div class="empty-text">No upcoming tasks yet</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- CERTIFICATES -->
+    <div class="mt-lg">
+      <div class="section-title">
+        <i class="ri-medal-line" style="color:#ffc832;font-size:16px"></i> My Certificates
+      </div>
+      {% if certificates %}
+      <div class="cert-grid">
+        {% for cert in certificates %}
+        <div class="cert-card reveal">
+          <div class="flex gap-md">
+            <div class="cert-icon">
+              <i class="ri-award-fill" style="color:#50ff96;font-size:20px"></i>
+            </div>
+            <div style="flex:1">
+              <div class="cert-title">{{ cert['act_title'] }}</div>
+              <div class="text-muted" style="font-size:12px">
+                <i class="ri-building-line"></i> {{ cert['org_name'] }}
+              </div>
+              <div class="text-muted" style="font-size:12px;margin-top:2px">
+                <i class="ri-calendar-line"></i> {{ cert['act_date'] or 'N/A' }}
+              </div>
+              <div class="cert-issued-date">
+                Issued {{ cert['issued_at'].strftime('%Y-%m-%d') if cert['issued_at'] else '' }}
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:14px">
+            <a href="{{ url_for('volunteer.download_certificate', cert_id=cert['id']) }}" target="_blank"
+              class="btn btn-success btn-sm w-full">
+              <i class="ri-download-line"></i> Download Certificate
+            </a>
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="card cert-empty-card">
+        <div class="empty-state">
+          <div class="empty-icon"><i class="ri-medal-line"></i></div>
+          <div class="empty-text">No certificates yet</div>
+          <div class="empty-sub">Certificates are issued after activity completion and attendance is confirmed</div>
+        </div>
+      </div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function previewAndSubmit(input) {
+    const file = input.files[0];
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert('File is too large. Max 2 MB.');
+      input.value = '';
+      return;
+    }
+    document.getElementById('photoForm').submit();
+  }
+
+  const dropZone = document.getElementById('dropZone');
+  dropZone.addEventListener('dragover', e => {
+    e.preventDefault();
+    dropZone.classList.add('drag-over');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-over');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+      const dt = new DataTransfer();
+      dt.items.add(file);
+      document.getElementById('photoInput').files = dt.files;
+      previewAndSubmit(document.getElementById('photoInput'));
+    }
+  });
+</script>
+{% endblock %}

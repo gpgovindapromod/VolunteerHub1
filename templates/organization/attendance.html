@@ -1,0 +1,311 @@
+{% extends 'base.html' %}
+{% block title %}Attendance{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="app-layout">
+  {% include 'organization/sidebar.html' %}
+  <div class="main-content">
+
+    <div class="page-header">
+      <div class="page-title">Attendance</div>
+      <div class="page-subtitle">Mark per-day attendance for assigned volunteers</div>
+    </div>
+
+    <!-- Activity selector -->
+    <div class="card mb-md">
+      <form method="GET" style="display:flex;gap:14px;align-items:flex-end;flex-wrap:wrap;">
+        <div class="form-group" style="flex:1;min-width:200px;margin-bottom:0;">
+          <label for="activity_select">Select Activity</label>
+          <select id="activity_select" name="activity" class="form-control" onchange="this.form.submit()">
+            <option value="">-- Choose an activity --</option>
+            {% for act in activities %}
+            <option value="{{ act['id'] }}" {% if selected_activity and selected_activity['id']==act['id'] %}selected{%
+              endif %}>
+              {{ act['title'] }} ({{ act['start_date'] or 'TBD' }})
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+      </form>
+    </div>
+
+    {% if selected_activity %}
+
+    <!-- Day tabs with status indicators -->
+    {% if days %}
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;align-items:center;">
+      <span class="text-muted" style="font-size:12px;margin-right:4px;"><i class="ri-calendar-line"></i> Days:</span>
+      {% for day in days %}
+      {% set dd = day['day_date']|string %}
+      {% set status = days_status.get(dd, 'empty') %}
+      <a href="{{ url_for('organization.attendance') }}?activity={{ selected_activity['id'] }}&day={{ dd }}"
+        class="btn btn-sm {{ 'btn-primary' if selected_day==dd else 'btn-ghost' }}" style="position:relative; gap:6px;">
+        {% if status == 'complete' %}
+        <i class="ri-checkbox-circle-fill" style="color:#50ff96;"></i>
+        {% elif status == 'partial' %}
+        <i class="ri-time-line" style="color:#ffc832;"></i>
+        {% else %}
+        <i class="ri-circle-line" style="color:var(--muted);"></i>
+        {% endif %}
+        {{ day['label'] }}
+        <span style="font-size:10px;opacity:0.7;">({{ dd }})</span>
+      </a>
+      {% endfor %}
+
+      <!-- Legend -->
+      <div style="margin-left:auto;display:flex;gap:14px;font-size:11px;color:var(--muted);">
+        <span><i class="ri-checkbox-circle-fill" style="color:#50ff96;"></i> Done</span>
+        <span><i class="ri-time-line" style="color:#ffc832;"></i> Partial</span>
+        <span><i class="ri-circle-line"></i> Not started</span>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Attendance form for selected day -->
+    <form action="{{ url_for('organization.save_attendance') }}" method="POST">
+      <input type="hidden" name="activity_id" value="{{ selected_activity['id'] }}">
+      <input type="hidden" name="day_date" value="{{ selected_day }}">
+
+      <div class="flex-between flex-wrap mb-md gap-md">
+        <div class="section-title" style="flex:1;margin-bottom:0;">
+          <i class="ri-checkbox-multiple-line" style="color:var(--pink);"></i>
+          {{ selected_activity['title'] }}
+          {% if days|length > 1 and selected_day %}
+          <span class="badge badge-cyan" style="margin-left:8px;">
+            <i class="ri-calendar-line"></i> {{ selected_day }}
+          </span>
+          {% set cur_status = days_status.get(selected_day, 'empty') %}
+          {% if cur_status == 'complete' %}
+          <span class="badge badge-green" style="margin-left:6px;"><i class="ri-checkbox-circle-line"></i> Attendance
+            Saved</span>
+          {% elif cur_status == 'partial' %}
+          <span class="badge badge-yellow" style="margin-left:6px;"><i class="ri-time-line"></i> Partially Saved</span>
+          {% endif %}
+          {% endif %}
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button type="button" class="btn btn-ghost btn-sm" id="markAllPresent">
+            <i class="ri-checkbox-circle-line"></i> All Present
+          </button>
+          <button type="button" class="btn btn-ghost btn-sm" id="markAllAbsent">
+            <i class="ri-close-circle-line"></i> Clear All
+          </button>
+          <button type="submit" class="btn btn-success">
+            <i class="ri-save-line"></i> Save Attendance
+          </button>
+        </div>
+      </div>
+
+      {% if assignments %}
+      <!-- Live summary -->
+      <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;">
+        <span class="badge badge-green" id="presentCount">0 Present</span>
+        <span class="badge badge-pink" id="absentCount">{{ assignments|length }} Absent</span>
+        <span class="badge badge-cyan">{{ assignments|length }} Total</span>
+      </div>
+
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Volunteer</th>
+              <th>Role</th>
+              <th>Contact</th>
+              <th style="text-align:center;">
+                Present on {{ selected_day }}
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in assignments %}
+            {# Use string key to match how attendance_map was built in Python #}
+            {% set a_key = a['id']|string %}
+            {% set day_map = attendance_map.get(a_key, {}) %}
+            {% set is_checked = day_map.get(selected_day, 0) %}
+            <tr>
+              <td>
+                <div style="display:flex;align-items:center;gap:10px;">
+                  <div
+                    style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,var(--pink),var(--purple));display:flex;align-items:center;justify-content:center;font-weight:700;font-size:12px;color:#fff;flex-shrink:0;">
+                    {{ a['vol_name'][0]|upper }}
+                  </div>
+                  <div>
+                    <div style="font-weight:600;">{{ a['vol_name'] }}</div>
+                    <div class="text-muted" style="font-size:12px;">{{ a['vol_email'] }}</div>
+                  </div>
+                </div>
+              </td>
+              <td><span class="badge badge-purple">{{ a['role'] }}</span></td>
+              <td class="text-muted" style="font-size:12px;">{{ a['vol_phone'] or '—' }}</td>
+              <td style="text-align:center;">
+                <label class="check-label" style="justify-content:center;">
+                  <input type="checkbox" name="present[]" value="{{ a['id'] }}" class="attendance-check" {% if
+                    is_checked %}checked{% endif %}>
+                  <div class="check-box"></div>
+                </label>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div
+        style="display:flex;justify-content:space-between;align-items:center;margin-top:16px;flex-wrap:wrap;gap:12px;">
+        <!-- Navigate to next incomplete day -->
+        {% set next_day = namespace(found=None) %}
+        {% for day in days %}
+        {% if next_day.found is none and day['day_date']|string != selected_day and
+        days_status.get(day['day_date']|string, 'empty') != 'complete' %}
+        {% set next_day.found = day['day_date']|string %}
+        {% endif %}
+        {% endfor %}
+        {% if next_day.found %}
+        <a href="{{ url_for('organization.attendance') }}?activity={{ selected_activity['id'] }}&day={{ next_day.found }}"
+          class="btn btn-ghost btn-sm">
+          <i class="ri-arrow-right-line"></i> Next: {{ next_day.found }}
+        </a>
+        {% else %}
+        <span class="badge badge-green" style="font-size:12px;"><i class="ri-checkbox-circle-fill"></i> All days
+          complete!</span>
+        {% endif %}
+
+        <button type="submit" class="btn btn-success btn-lg">
+          <i class="ri-save-line"></i> Save Attendance
+        </button>
+      </div>
+
+      {% else %}
+      <div class="card">
+        <div class="empty-state">
+          <div class="empty-icon"><i class="ri-group-line"></i></div>
+          <div class="empty-text">No volunteers assigned yet</div>
+          <div class="empty-sub">Approve applications or use Smart Auto-Assign first</div>
+          <a href="{{ url_for('organization.activity_detail', activity_id=selected_activity['id']) }}"
+            class="btn btn-primary mt-md">
+            <i class="ri-arrow-left-line"></i> Go to Activity
+          </a>
+        </div>
+      </div>
+      {% endif %}
+    </form>
+
+    <!-- Multi-day full summary table -->
+    {% if assignments %}
+    <div class="card mt-lg reveal">
+      <div class="section-title">
+        <i class="ri-bar-chart-line" style="color:var(--cyan);"></i>
+        Full Attendance Summary
+      </div>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Volunteer</th>
+              <th>Role</th>
+              {% for day in days %}
+              {% set dd = day['day_date']|string %}
+              {% set status = days_status.get(dd, 'empty') %}
+              <th style="text-align:center;font-size:11px;">
+                {{ day['label'] }}<br>
+                <span style="font-weight:400;opacity:0.7;">{{ dd }}</span><br>
+                {% if status == 'complete' %}<i class="ri-checkbox-circle-fill"
+                  style="color:#50ff96;font-size:13px;"></i>
+                {% elif status == 'partial' %}<i class="ri-time-line" style="color:#ffc832;font-size:13px;"></i>
+                {% else %}<i class="ri-circle-line" style="color:var(--muted);font-size:13px;"></i>{% endif %}
+              </th>
+              {% endfor %}
+              <th style="text-align:center;">Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in assignments %}
+            {% set a_key = a['id']|string %}
+            {% set day_map = attendance_map.get(a_key, {}) %}
+            {% set ns = namespace(total=0) %}
+            <tr>
+              <td style="font-weight:600;">{{ a['vol_name'] }}</td>
+              <td><span class="badge badge-purple" style="font-size:10px;">{{ a['role'] }}</span></td>
+              {% for day in days %}
+              {% set dd = day['day_date']|string %}
+              {% set day_logged = a_key in attendance_map and dd in attendance_map[a_key] %}
+              {% set present = attendance_map.get(a_key, {}).get(dd, -1) %}
+              {% if present == 1 %}{% set ns.total = ns.total + 1 %}{% endif %}
+              <td style="text-align:center;">
+                <a href="{{ url_for('organization.attendance') }}?activity={{ selected_activity['id'] }}&day={{ dd }}"
+                  title="{% if not day_logged %}Not yet marked — click to mark{% elif present==1 %}Present{% else %}Absent — click to change{% endif %}"
+                  style="text-decoration:none;font-size:16px;">
+                  {% if not day_logged %}
+                  <span style="color:var(--muted);font-size:18px;">○</span>
+                  {% elif present == 1 %}
+                  ✅
+                  {% else %}
+                  ❌
+                  {% endif %}
+                </a>
+              </td>
+              {% endfor %}
+              <td style="text-align:center;">
+                <span
+                  class="badge {{ 'badge-green' if ns.total==days|length else 'badge-yellow' if ns.total > 0 else 'badge-pink' }}">
+                  {{ ns.total }}/{{ days|length }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="card">
+      <div class="empty-state">
+        <div class="empty-icon"><i class="ri-calendar-line"></i></div>
+        <div class="empty-text">Select an activity above to get started</div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+  function updateCounts() {
+    const checks = document.querySelectorAll('.attendance-check');
+    const present = [...checks].filter(c => c.checked).length;
+    const absent = checks.length - present;
+    const pc = document.getElementById('presentCount');
+    const ac = document.getElementById('absentCount');
+    if (pc) pc.textContent = `${present} Present`;
+    if (ac) ac.textContent = `${absent} Absent`;
+  }
+
+  document.querySelectorAll('.attendance-check').forEach(c => {
+    c.addEventListener('change', updateCounts);
+  });
+
+  document.getElementById('markAllAbsent')?.addEventListener('click', () => {
+    document.querySelectorAll('.attendance-check').forEach(c => c.checked = false);
+    updateCounts();
+  });
+
+  // Init counts on load (handles pre-checked boxes from saved data)
+  updateCounts();
+
+  // Warn before leaving if unsaved changes
+  let isDirty = false;
+  document.querySelectorAll('.attendance-check').forEach(c => {
+    c.addEventListener('change', () => isDirty = true);
+  });
+  document.querySelector('form')?.addEventListener('submit', () => isDirty = false);
+  window.addEventListener('beforeunload', e => {
+    if (isDirty) {
+      e.preventDefault();
+      e.returnValue = 'You have unsaved attendance changes. Are you sure you want to leave?';
+    }
+  });
+</script>
+{% endblock %}
+{% endblock %}

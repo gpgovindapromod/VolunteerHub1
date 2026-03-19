@@ -1,0 +1,52 @@
+<nav class="navbar" id="navbar">
+  <div class="nav-container">
+    <a href="{{ url_for('index') }}" class="brand">Volunteer<span>Hub</span></a>
+
+    <div class="nav-links">
+      {% if session.get('user_role') == 'volunteer' %}
+      <a href="{{ url_for('volunteer.dashboard') }}"
+        class="nav-link-item {% if request.endpoint=='volunteer.dashboard'  %}active{% endif %}"><i
+          class="ri-home-line"></i> Dashboard</a>
+      <a href="{{ url_for('volunteer.activities') }}"
+        class="nav-link-item {% if request.endpoint=='volunteer.activities' %}active{% endif %}"><i
+          class="ri-calendar-line"></i> Activities</a>
+      <a href="{{ url_for('volunteer.profile') }}"
+        class="nav-link-item {% if request.endpoint=='volunteer.profile'    %}active{% endif %}"><i
+          class="ri-user-line"></i> Profile</a>
+      {% elif session.get('user_role') == 'organization' %}
+      <a href="{{ url_for('organization.dashboard') }}"
+        class="nav-link-item {% if request.endpoint=='organization.dashboard'      %}active{% endif %}">Dashboard</a>
+      <a href="{{ url_for('organization.create_activity') }}"
+        class="nav-link-item {% if request.endpoint=='organization.create_activity' %}active{% endif %}">Create</a>
+      <a href="{{ url_for('organization.volunteers') }}"
+        class="nav-link-item {% if request.endpoint=='organization.volunteers'     %}active{% endif %}">Volunteers</a>
+      {% elif session.get('is_admin') %}
+      <a href="{{ url_for('admin.dashboard') }}" class="nav-link-item active">Admin Panel</a>
+      {% else %}
+      <a href="#problem" class="nav-link-item">Problems</a>
+      <a href="#solution" class="nav-link-item">Solution</a>
+      <a href="#how" class="nav-link-item">How It Works</a>
+      {% endif %}
+
+      {% if session.get('user_id') or session.get('is_admin') %}
+      <span class="role-badge">
+        {% if session.get('is_admin') %}🛡️ Admin
+        {% elif session.get('user_role') == 'volunteer' %}🙋 Volunteer
+        {% else %}🏢 Org{% endif %}
+      </span>
+      <a href="{{ url_for('admin.logout') if session.get('is_admin') else url_for('auth.logout') }}" class="nav-signin">
+        <i class="ri-logout-box-line"></i> Logout
+      </a>
+      {% else %}
+      <a href="{{ url_for('auth.login') }}" class="nav-signin">Sign In</a>
+      {% endif %}
+
+      <button class="theme-toggle" id="themeToggle" aria-label="Toggle theme">
+        <i class="ri-sun-line" id="themeIcon"></i>
+      </button>
+      <button class="hamburger" id="hamburger" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </div>
+</nav>

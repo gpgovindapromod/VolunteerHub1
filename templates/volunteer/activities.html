@@ -1,0 +1,106 @@
+{% extends 'base.html' %}
+{% block title %}Browse Activities{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="app-layout">
+  {% include 'volunteer/sidebar.html' %}
+  <div class="main-content">
+
+    <div class="page-header flex-between flex-wrap gap-md">
+      <div>
+        <div class="page-title">Browse Activities</div>
+        <div class="page-subtitle">Find the perfect volunteering opportunity</div>
+      </div>
+      <div class="search-wrap">
+        <i class="ri-search-line search-ico"></i>
+        <input type="text" class="form-control" id="activitySearch" placeholder="Search activities..." style="padding-left:38px; min-width:240px;">
+      </div>
+    </div>
+
+    <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:24px;">
+      <button class="btn btn-primary btn-sm filter-btn" data-filter="all">All</button>
+      <button class="btn btn-ghost btn-sm filter-btn" data-filter="open">Open</button>
+    </div>
+
+    {% if activities %}
+    <div class="activity-grid" id="activitiesGrid">
+      {% for act in activities %}
+      <div class="activity-card reveal" data-name="{{ act['title']|lower }}">
+        <div class="activity-card-header">
+          <span class="badge badge-green" style="position:absolute;top:14px;right:14px;">Open</span>
+          <div class="activity-title">{{ act['title'] }}</div>
+          <div class="activity-org"><i class="ri-building-line"></i> {{ act['org_name'] }}</div>
+        </div>
+        <div class="activity-card-body">
+          <p style="font-size:13px; color:var(--muted); line-height:1.6; margin-bottom:10px;">{{ act['description'][:110] if act['description'] else '' }}{% if act['description'] and act['description']|length > 110 %}…{% endif %}</p>
+          <div class="activity-meta">
+            <span><i class="ri-calendar-line"></i> {{ act['date'] if act['date'] else 'TBD' }}</span>
+            <span><i class="ri-map-pin-line"></i> {{ act['location'] if act['location'] else 'Online' }}</span>
+          </div>
+          <div style="display:flex; flex-wrap:wrap; gap:6px; margin:10px 0;">
+            {% for role in roles_map.get(act['id'], []) %}
+              <span class="badge badge-purple"><i class="ri-user-line"></i> {{ role['name'] }} ({{ role['total'] - role['filled'] }} left)</span>
+            {% else %}
+              <span class="badge badge-cyan">General Volunteer</span>
+            {% endfor %}
+          </div>
+          <div class="progress"><div class="progress-fill" style="width:{{ [(act['assigned_count']/act['total_slots']*100 if act['total_slots'] else 0)|int, 100]|min }}%;"></div></div>
+          <div class="activity-actions">
+            {% if act['id'] in applied_ids %}
+              <button class="btn btn-ghost btn-sm w-full" disabled style="opacity:0.6; cursor:not-allowed;"><i class="ri-checkbox-circle-line"></i> Applied</button>
+            {% else %}
+              <button class="btn btn-primary btn-sm w-full" data-modal-open="applyModal{{ act['id'] }}"><i class="ri-send-plane-line"></i> Apply Now</button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-overlay" id="applyModal{{ act['id'] }}">
+        <div class="modal">
+          <button class="modal-close" data-modal-close><i class="ri-close-line"></i></button>
+          <div class="modal-title"><i class="ri-send-plane-line" style="color:var(--pink);"></i> Apply for {{ act['title'] }}</div>
+          <div class="modal-body">Choose a role and submit your application to <strong>{{ act['org_name'] }}</strong>.</div>
+          <form action="{{ url_for('volunteer.apply', activity_id=act['id']) }}" method="POST">
+            <div class="form-group">
+              <label>Select Role</label>
+              <select name="role" class="form-control" required>
+                {% for role in roles_map.get(act['id'], []) %}
+                  <option value="{{ role['name'] }}">{{ role['name'] }} ({{ role['total']-role['filled'] }} slots left)</option>
+                {% else %}
+                  <option value="General Volunteer">General Volunteer</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Why do you want to volunteer? (optional)</label>
+              <textarea name="motivation" class="form-control" placeholder="Brief note to the organizer..."></textarea>
+            </div>
+            <div class="modal-actions">
+              <button type="button" class="btn btn-ghost" data-modal-close>Cancel</button>
+              <button type="submit" class="btn btn-primary"><i class="ri-send-plane-line"></i> Submit</button>
+            </div>
+          </form>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="card"><div class="empty-state"><div class="empty-icon"><i class="ri-inbox-line"></i></div><div class="empty-text">No activities available right now</div><div class="empty-sub">Check back soon — organizations are adding new activities</div></div></div>
+    {% endif %}
+  </div>
+</div>
+{% block extra_js %}
+<script>
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => { b.classList.remove('btn-primary'); b.classList.add('btn-ghost'); });
+    btn.classList.add('btn-primary'); btn.classList.remove('btn-ghost');
+  });
+});
+document.getElementById('activitySearch')?.addEventListener('input', function() {
+  const q = this.value.toLowerCase();
+  document.querySelectorAll('.activity-card').forEach(c => { c.style.display = c.dataset.name.includes(q) ? '' : 'none'; });
+});
+</script>
+{% endblock %}
+{% endblock %}

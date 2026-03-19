@@ -1,0 +1,161 @@
+{% extends 'base.html' %}
+{% block title %}{{ 'Edit' if edit else 'Create' }} Activity{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="app-layout">
+  {% include 'organization/sidebar.html' %}
+  <div class="main-content">
+    <div class="page-header">
+      <div class="page-title"><i class="ri-{{ 'edit-line' if edit else 'add-circle-line' }}" style="color:var(--pink);"></i> {{ 'Edit Activity' if edit else 'Create New Activity' }}</div>
+      <div class="page-subtitle">{{ 'Update activity details, dates, and roles' if edit else 'Set up a volunteering opportunity for your fest' }}</div>
+    </div>
+
+    <div class="card reveal" style="max-width:760px;">
+      <form action="{{ url_for('organization.edit_activity', activity_id=activity['id']) if edit else url_for('organization.create_activity') }}" method="POST" data-validate>
+
+        <!-- Basic Info -->
+        <div class="section-title mb-md" style="font-size:0.9rem;"><i class="ri-information-line"></i> Basic Info</div>
+        <div class="form-group">
+          <label for="title">Activity Title</label>
+          <input type="text" id="title" name="title" class="form-control" placeholder="e.g. Photography Team for Cultural Night" required value="{{ activity['title'] if activity else request.form.get('title','') }}">
+          <div class="form-error" id="title-error"></div>
+        </div>
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea id="description" name="description" class="form-control" style="min-height:100px;" placeholder="Describe the activity..." required>{{ activity['description'] if activity else request.form.get('description','') }}</textarea>
+        </div>
+
+        <!-- Multi-day dates -->
+        <div class="section-title mb-md mt-md" style="font-size:0.9rem;"><i class="ri-calendar-line"></i> Schedule (supports multi-day)</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;">
+          <div class="form-group">
+            <label for="start_date">Start Date <span style="color:var(--pink);">*</span></label>
+            <input type="date" id="start_date" name="start_date" class="form-control" required value="{{ activity['start_date'] if activity else request.form.get('start_date','') }}">
+          </div>
+          <div class="form-group">
+            <label for="end_date">End Date <span class="text-muted">(multi-day)</span></label>
+            <input type="date" id="end_date" name="end_date" class="form-control" value="{{ activity['end_date'] if activity else request.form.get('end_date','') }}" placeholder="Leave blank for single day">
+          </div>
+          <div class="form-group">
+            <label for="time">Daily Start Time</label>
+            <input type="time" id="time" name="time" class="form-control" value="{{ activity['time'] if activity else request.form.get('time','') }}">
+          </div>
+        </div>
+        <div class="alert alert-info" style="font-size:12px;margin-bottom:16px;">
+          <i class="ri-information-line"></i> If end date differs from start date, a separate attendance sheet will be created for each day automatically.
+        </div>
+        <div class="form-group">
+          <label for="location">Location / Venue</label>
+          <input type="text" id="location" name="location" class="form-control" placeholder="e.g. Main Auditorium" value="{{ activity['location'] if activity else request.form.get('location','') }}">
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Roles with skills -->
+        <div class="section-title mb-md" style="font-size:0.9rem;"><i class="ri-user-line"></i> Volunteer Roles & Skills</div>
+        <p class="text-muted mb-md" style="font-size:13px;"><i class="ri-magic-line" style="color:var(--pink);"></i> Add skill tags to each role so the Smart Auto-Assign can match volunteers based on their profile skills.</p>
+
+        <div id="rolesContainer">
+          {% if roles %}
+            {% for role in roles %}
+            <div class="role-row" style="align-items:flex-start;gap:10px;margin-bottom:10px;">
+              <div style="flex:2;">
+                <input type="text" name="role_name[]" class="form-control" placeholder="Role name (e.g. Photographer)" required value="{{ role['name'] }}">
+              </div>
+              <div style="width:90px;">
+                <input type="number" name="role_count[]" class="form-control" placeholder="Count" min="1" required value="{{ role['total'] }}">
+              </div>
+              <div style="flex:2;">
+                <input type="text" name="role_skills[]" class="form-control" placeholder="Skills: e.g. photography,editing (optional)" value="{{ role['skill_tags'] or '' }}">
+              </div>
+              <button type="button" class="btn btn-danger btn-sm remove-role" style="flex-shrink:0;margin-top:0;"><i class="ri-close-line"></i></button>
+            </div>
+            {% endfor %}
+          {% else %}
+          <div class="role-row" style="align-items:flex-start;gap:10px;margin-bottom:10px;">
+            <div style="flex:2;"><input type="text" name="role_name[]" class="form-control" placeholder="Role name (e.g. Photographer)" required value="{{ request.form.getlist('role_name[]')[0] if request.form.getlist('role_name[]') else '' }}"></div>
+            <div style="width:90px;"><input type="number" name="role_count[]" class="form-control" placeholder="Count" min="1" required value="{{ request.form.getlist('role_count[]')[0] if request.form.getlist('role_count[]') else '' }}"></div>
+            <div style="flex:2;"><input type="text" name="role_skills[]" class="form-control" placeholder="Skills (optional, comma-separated)"></div>
+            <button type="button" class="btn btn-danger btn-sm remove-role" style="flex-shrink:0;"><i class="ri-close-line"></i></button>
+          </div>
+          {% endif %}
+        </div>
+        <button type="button" class="add-role-btn" id="addRoleBtn"><i class="ri-add-line"></i> Add Another Role</button>
+
+        <div class="divider"></div>
+
+        <!-- Settings -->
+        <div class="section-title mb-md" style="font-size:0.9rem;"><i class="ri-settings-line"></i> Settings</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+          <div class="form-group">
+            <label for="deadline">Application Deadline</label>
+            <input type="date" id="deadline" name="deadline" class="form-control" value="{{ activity['deadline'] if activity else request.form.get('deadline','') }}">
+          </div>
+          <div class="form-group">
+            <label for="status">Registration Status</label>
+            <select id="status" name="status" class="form-control">
+              <option value="open"   {% if (activity and activity['status']=='open')   or (not activity and request.form.get('status','open')=='open')   %}selected{% endif %}>Open for Applications</option>
+              <option value="closed" {% if (activity and activity['status']=='closed') or request.form.get('status')=='closed' %}selected{% endif %}>Closed</option>
+              <option value="draft"  {% if (activity and activity['status']=='draft')  or request.form.get('status')=='draft'  %}selected{% endif %}>Draft</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="requirements">Special Requirements (optional)</label>
+          <textarea id="requirements" name="requirements" class="form-control" placeholder="Any specific skills, dress code, or prerequisites...">{{ activity['requirements'] if activity else request.form.get('requirements','') }}</textarea>
+        </div>
+
+        <!-- Auto-assign toggle -->
+        <div style="display:flex;align-items:center;gap:12px;padding:16px;background:rgba(255,65,108,0.06);border:1px solid rgba(255,65,108,0.15);border-radius:12px;margin-bottom:20px;">
+          <label class="check-label" style="cursor:pointer;">
+            <input type="checkbox" name="auto_assign" id="auto_assign" {% if activity and activity['auto_assign'] %}checked{% endif %}>
+            <div class="check-box"></div>
+          </label>
+          <div>
+            <div style="font-weight:600;font-size:14px;"><i class="ri-magic-line" style="color:var(--pink);"></i> Enable Smart Auto-Assign</div>
+            <div class="text-muted" style="font-size:12px;">Automatically match volunteers to roles based on their registered skills when you click "Smart Auto-Assign"</div>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:12px;">
+          <button type="submit" class="btn btn-primary btn-lg"><i class="ri-{{ 'save-line' if edit else 'send-plane-line' }}"></i> {{ 'Save Changes' if edit else 'Publish Activity' }}</button>
+          <a href="{{ url_for('organization.activity_detail', activity_id=activity['id']) if edit else url_for('organization.dashboard') }}" class="btn btn-ghost btn-lg">Cancel</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+{% block extra_js %}
+<script>
+// Dynamic role rows (extended with skills column)
+const rc = document.getElementById('rolesContainer');
+const ab = document.getElementById('addRoleBtn');
+if(ab && rc){
+  function bindRemove(row){ row.querySelector('.remove-role')?.addEventListener('click',()=>row.remove()); }
+  rc.querySelectorAll('.role-row').forEach(bindRemove);
+  ab.addEventListener('click',()=>{
+    const row = document.createElement('div');
+    row.className = 'role-row';
+    row.style.cssText = 'align-items:flex-start;gap:10px;margin-bottom:10px;display:flex;';
+    row.innerHTML = `
+      <div style="flex:2;"><input type="text" name="role_name[]" class="form-control" placeholder="Role name" required></div>
+      <div style="width:90px;"><input type="number" name="role_count[]" class="form-control" placeholder="Count" min="1" required></div>
+      <div style="flex:2;"><input type="text" name="role_skills[]" class="form-control" placeholder="Skills (optional)"></div>
+      <button type="button" class="btn btn-danger btn-sm remove-role" style="flex-shrink:0;"><i class="ri-close-line"></i></button>`;
+    rc.appendChild(row); bindRemove(row);
+  });
+}
+
+// Validate end_date >= start_date
+document.querySelector('form')?.addEventListener('submit', e => {
+  const s = document.getElementById('start_date')?.value;
+  const en = document.getElementById('end_date')?.value;
+  if(s && en && en < s){
+    e.preventDefault();
+    alert('End date cannot be before start date.');
+  }
+});
+</script>
+{% endblock %}
+{% endblock %}

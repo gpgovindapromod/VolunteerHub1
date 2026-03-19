@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Login{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card">
+    <div style="text-align:center; margin-bottom:24px;">
+      <div class="auth-logo-icon"><i class="ri-flashlight-line"></i></div>
+      <div class="auth-title">Welcome Back</div>
+      <div class="auth-subtitle">Sign in to your VolunteerHub account</div>
+    </div>
+
+    <form action="{{ url_for('auth.login') }}" method="POST" data-validate>
+      <input type="hidden" name="role" id="login-role"
+        value="{{ request.form.get('role') or request.args.get('role') or 'volunteer' }}">
+
+      <span class="role-toggle-label">Sign in as</span>
+      <div class="role-toggle" id="login-toggle">
+        <button type="button"
+          class="role-toggle-btn {% if (request.form.get('role') or request.args.get('role') or 'volunteer') != 'organization' %}active{% endif %}"
+          onclick="setRole('login-role','volunteer',this,'login-toggle')">
+          <span class="role-icon">🙋</span> Volunteer
+        </button>
+        <button type="button"
+          class="role-toggle-btn org {% if (request.form.get('role') or request.args.get('role')) == 'organization' %}active{% endif %}"
+          onclick="setRole('login-role','organization',this,'login-toggle')">
+          <span class="role-icon">🏢</span> Organization
+        </button>
+      </div>
+
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" class="form-control" placeholder="you@example.com" required
+          value="{{ request.form.get('email','') }}" autocomplete="email">
+        <div class="form-error" id="email-error"></div>
+      </div>
+      <div class="form-group">
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" class="form-control" placeholder="••••••••" required
+          autocomplete="current-password">
+        <div class="form-error" id="password-error"></div>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-full btn-lg">
+        <i class="ri-login-box-line"></i> Sign In
+      </button>
+    </form>
+
+    <div class="auth-footer-group">
+      <div class="auth-footer">Don't have an account? <a href="{{ url_for('auth.register') }}">Create one free</a></div>
+      <div class="auth-footer">Admin? <a href="{{ url_for('admin.login') }}">Admin Login</a></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

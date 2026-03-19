@@ -1,0 +1,95 @@
+{% extends 'base.html' %}
+{% block title %}Register{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="auth-page">
+  <div class="auth-card auth-card-wide">
+    <div style="text-align:center; margin-bottom:24px;">
+      <div class="auth-logo-icon auth-logo-icon--purple"><i class="ri-user-add-line"></i></div>
+      <div class="auth-title">Create Account</div>
+      <div class="auth-subtitle">Join the VolunteerHub community</div>
+    </div>
+
+    <form action="{{ url_for('auth.register') }}" method="POST" data-validate>
+      <input type="hidden" name="role" id="reg-role"
+        value="{{ request.form.get('role') or request.args.get('role') or 'volunteer' }}">
+
+      <span class="role-toggle-label">I am a</span>
+      <div class="role-toggle" id="reg-toggle">
+        <button type="button"
+          class="role-toggle-btn {% if (request.form.get('role') or request.args.get('role') or 'volunteer') != 'organization' %}active{% endif %}"
+          onclick="setRegRole('volunteer',this)">
+          <span class="role-icon">🙋</span> Volunteer
+        </button>
+        <button type="button"
+          class="role-toggle-btn org {% if (request.form.get('role') or request.args.get('role')) == 'organization' %}active{% endif %}"
+          onclick="setRegRole('organization',this)">
+          <span class="role-icon">🏢</span> Organization
+        </button>
+      </div>
+
+      <div class="form-group">
+        <label for="name" id="name-label">Full Name</label>
+        <input type="text" id="name" name="name" class="form-control" placeholder="Your name or org name" required
+          value="{{ request.form.get('name','') }}" autocomplete="name">
+        <div class="form-error" id="name-error"></div>
+      </div>
+      <div class="form-group">
+        <label for="email">Email Address</label>
+        <input type="email" id="email" name="email" class="form-control" placeholder="you@example.com" required
+          value="{{ request.form.get('email','') }}" autocomplete="email">
+        <div class="form-error" id="email-error"></div>
+      </div>
+
+      <div id="volunteerFields">
+        <div class="form-group">
+          <label for="phone">Phone Number</label>
+          <input type="tel" id="phone" name="phone" class="form-control" placeholder="+91 9876543210"
+            value="{{ request.form.get('phone','') }}">
+        </div>
+      </div>
+
+      <div id="orgFields" style="display:none;">
+        <div class="form-group">
+          <label for="org_type">Organization Type</label>
+          <select id="org_type" name="org_type" class="form-control">
+            <option value="">Select type</option>
+            <option value="college_club">College Club</option>
+            <option value="ngo">NGO / Non-profit</option>
+            <option value="corporate">Corporate</option>
+            <option value="other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="description">Description</label>
+          <textarea id="description" name="description" class="form-control"
+            placeholder="Brief description of your organization..."></textarea>
+        </div>
+      </div>
+
+      <div class="two-col">
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input type="password" id="password" name="password" class="form-control" placeholder="Min. 8 chars" required
+            autocomplete="new-password">
+          <div class="form-error" id="password-error"></div>
+        </div>
+        <div class="form-group">
+          <label for="confirm_password">Confirm</label>
+          <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Repeat"
+            required autocomplete="new-password">
+          <div class="form-error" id="confirm_password-error"></div>
+        </div>
+      </div>
+
+      <button type="submit" class="btn btn-primary w-full btn-lg">
+        <i class="ri-user-add-line"></i> Create Account
+      </button>
+    </form>
+
+    <div class="auth-footer-group">
+      <div class="auth-footer">Already have an account? <a href="{{ url_for('auth.login') }}">Sign in</a></div>
+    </div>
+  </div>
+</div>
+{% endblock %}

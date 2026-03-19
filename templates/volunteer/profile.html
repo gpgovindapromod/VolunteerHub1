@@ -1,0 +1,92 @@
+{% extends 'base.html' %}
+{% block title %}My Profile{% endblock %}
+{% block footer %}{% endblock %}
+{% block content %}
+<div class="app-layout">
+  {% include 'volunteer/sidebar.html' %}
+  <div class="main-content">
+    <div class="page-title mb-lg">My Profile</div>
+
+    <div class="profile-hero reveal">
+      <div class="profile-avatar-lg">{{ (current_user['name'] or '?')[0]|upper }}</div>
+      <div>
+        <div class="profile-name">{{ current_user['name'] }}</div>
+        <div class="text-muted mt-sm">{{ current_user['email'] }}</div>
+        <div style="margin-top:10px; display:flex; flex-wrap:wrap; gap:6px; align-items:center;">
+          <span class="role-badge">🙋 Volunteer</span>
+          {% if volunteer and volunteer['skills'] %}
+            {% for skill in volunteer['skills'].split(',') %}
+              <span class="skill-tag">{{ skill.strip() }}</span>
+            {% endfor %}
+          {% endif %}
+        </div>
+      </div>
+      <div style="margin-left:auto; display:flex; gap:12px;">
+        <div class="card card-sm" style="text-align:center; min-width:80px; padding:14px 18px;">
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;">{{ stats.total_applied|default(0) }}</div>
+          <div class="text-muted" style="font-size:11px;">Applied</div>
+        </div>
+        <div class="card card-sm" style="text-align:center; min-width:80px; padding:14px 18px;">
+          <div style="font-family:'Syne',sans-serif;font-weight:800;font-size:1.5rem;">{{ stats.total_completed|default(0) }}</div>
+          <div class="text-muted" style="font-size:11px;">Completed</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card reveal">
+      <div class="section-title"><i class="ri-user-settings-line" style="color:var(--pink);"></i> Edit Profile</div>
+      <form action="{{ url_for('volunteer.profile') }}" method="POST" data-validate>
+        <div class="two-col" style="gap:16px;">
+          <div class="form-group">
+            <label for="name">Full Name</label>
+            <input type="text" id="name" name="name" class="form-control" value="{{ current_user['name'] }}" required>
+          </div>
+          <div class="form-group">
+            <label for="phone">Phone</label>
+            <input type="tel" id="phone" name="phone" class="form-control" value="{{ volunteer['phone'] if volunteer and volunteer['phone'] else '' }}" placeholder="+91 9876543210">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="bio">Bio</label>
+          <textarea id="bio" name="bio" class="form-control" placeholder="Tell organizations about yourself...">{{ volunteer['bio'] if volunteer and volunteer['bio'] else '' }}</textarea>
+        </div>
+        <div class="form-group">
+          <label>Skills</label>
+          <div style="display:flex; flex-wrap:wrap; gap:4px; margin-bottom:8px;" id="skillTags"></div>
+          <input type="text" id="skillInput" class="form-control" placeholder="Type skill + Enter (e.g. Photography)">
+          <input type="hidden" id="skills" name="skills" value="{{ volunteer['skills'] if volunteer and volunteer['skills'] else '' }}">
+          <div class="text-muted mt-sm" style="font-size:12px;"><i class="ri-information-line"></i> Press Enter or comma to add each skill</div>
+        </div>
+        <div class="two-col" style="gap:16px;">
+          <div class="form-group">
+            <label for="college">College / Institution</label>
+            <input type="text" id="college" name="college" class="form-control" value="{{ volunteer['college'] if volunteer and volunteer['college'] else '' }}" placeholder="Your institution">
+          </div>
+          <div class="form-group">
+            <label for="year">Year of Study</label>
+            <select id="year" name="year" class="form-control">
+              <option value="">Select year</option>
+              {% for y in ['1st Year','2nd Year','3rd Year','4th Year','Postgraduate','Alumni'] %}
+              <option value="{{ y }}" {% if volunteer and volunteer['year']==y %}selected{% endif %}>{{ y }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="ri-save-line"></i> Save Changes</button>
+      </form>
+    </div>
+
+    <div class="card mt-lg reveal">
+      <div class="section-title"><i class="ri-lock-line" style="color:var(--pink);"></i> Change Password</div>
+      <form action="{{ url_for('volunteer.change_password') }}" method="POST" data-validate>
+        <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:14px; flex-wrap:wrap;">
+          <div class="form-group"><label for="old_pw">Current Password</label><input type="password" id="old_pw" name="old_password" class="form-control" required></div>
+          <div class="form-group"><label for="new_pw">New Password</label><input type="password" id="new_pw" name="new_password" class="form-control" required></div>
+          <div class="form-group"><label for="confirm_pw">Confirm New</label><input type="password" id="confirm_pw" name="confirm_password" class="form-control" required></div>
+        </div>
+        <button type="submit" class="btn btn-ghost"><i class="ri-lock-password-line"></i> Update Password</button>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}
